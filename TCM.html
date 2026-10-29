@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>杏林中医体质分类与判定自测系统 </title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN for Radar Chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            jade: {
+              50: '#f2f8f5',
+              100: '#e1efe8',
+              200: '#c5e0d3',
+              600: '#2d6a4f',
+              700: '#22543d',
+              800: '#1b4332',
+              900: '#0f291e'
+            },
+            vermilion: {
+              500: '#b83b2e',
+              600: '#9b2c21',
+              700: '#7e2219'
+            },
+            paper: '#faf8f5',
+            ink: '#232b2b'
+          },
+          fontFamily: {
+            serif: ['"Noto Serif SC"', '"Songti SC"', 'SimSun', 'serif'],
+            sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 宣纸底色与印章装饰 */
+    body {
+      background-color: #f7f5f0;
+      color: #232b2b;
+      background-image: radial-gradient(#e5dfd3 0.75px, transparent 0.75px);
+      background-size: 24px 24px;
+    }
+    .chinese-seal {
+      border: 2px solid #b83b2e;
+      color: #b83b2e;
+      writing-mode: vertical-rl;
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      letter-spacing: 0.15em;
+    }
+    /* 打印优化样式 */
+    @media print {
+      body {
+        background: #ffffff !important;
+        background-image: none !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-shadow-none {
+        box-shadow: none !important;
+        border: 1px solid #d1d5db !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1ede4;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c5ded2;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2d6a4f;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased text-ink selection:bg-jade-100 selection:text-jade-900">
+
+  <!-- 顶部导航栏 -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-stone-200 sticky top-0 z-40 transition-all shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-20 h-20 rounded-xl bg-jade-800 text-amber-100 flex items-center justify-center font-serif text-lg font-bold shadow-inner">
+          杏林
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-serif font-bold text-stone-900 tracking-wide flex items-center gap-2">
+            中医体质辨识自测系统
+            <span class="text-xs font-sans font-normal px-2 py-0.5 rounded-full bg-jade-50 text-jade-700 border border-jade-200">202610测试版</span>
+          </h1>
+          <p class="text-xs text-stone-500 hidden sm:block">《中医体质分类与判定》标准67题</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="quick-demo-btn" onclick="openDemoModal()" class="no-print text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-amber-600/40 text-amber-800 bg-amber-50 hover:bg-amber-100 font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          一键填入演示数据
+        </button>
+        <button id="restart-btn-top" onclick="confirmReset()" class="no-print hidden text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-100 transition">
+          重新测试
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体容器 -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- 阶段 1: 基本信息设置与开始页 -->
+    <section id="section-intro" class="space-y-6">
+      <div class="relative bg-white border border-stone-200/80 rounded-2xl p-6 sm:p-10 shadow-sm overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 opacity-5 select-none pointer-events-none font-serif text-9xl font-black text-jade-900">
+          體質
+        </div>
+
+        <div class="max-w-3xl space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-medium tracking-wide">
+            <span class="w-2 h-2 rounded-full bg-jade-600"></span>
+            依据中华中医药学会国家标准规范編寫 (ZYYXH/T157-2009)
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-serif font-bold text-stone-800 leading-snug">
+            知常达变，辨体施养<br>
+            <span class="text-jade-700">探索专属于您的九维中医体质密码</span>
+          </h2>
+          <p class="text-sm sm:text-base text-stone-600 leading-relaxed">
+            体质是人体生命过程中，在先天禀赋和后天获得的基础上所形成的形态结构、生理功能和心理状态方面综合的、相对稳定的固有特质。本测评包含<strong>9类体质全套标准问题（平和、气虚、阳虚、阴虚、痰湿、湿热、血瘀、气郁、过敏体质）</strong>，测算结果将提供个性化养生食疗、穴位及作息指引。
+          </p>
+        </div>
+
+        <!-- 测评基本信息表单 -->
+        <div class="mt-8 pt-6 border-t border-stone-100 grid grid-cols-1 md:grid-cols-3 gap-6 bg-stone-50/70 p-5 rounded-xl border">
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">姓名或称呼 </label>
+            <input type="text" id="user-name" placeholder="例如：林先生 / 小林"  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-jade-600/30 focus:border-jade-600 bg-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">
+              性别 <span class="text-vermilion-500">*</span>
+              <span class="text-[11px] font-normal text-stone-400">（正确填写性别,用于智能匹配专属问题）</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="cursor-pointer">
+                <input type="radio" name="gender" value="female" checked class="peer sr-only">
+                <div class="text-center py-2.5 px-3 rounded-lg border border-stone-200 bg-white text-stone-700 text-sm font-medium peer-checked:border-jade-600 peer-checked:bg-jade-50 peer-checked:text-jade-800 transition">
+                  女 (Female)
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="gender" value="male" class="peer sr-only">
+                <div class="text-center py-2.5 px-3 rounded-lg border border-stone-200 bg-white text-stone-700 text-sm font-medium peer-checked:border-jade-600 peer-checked:bg-jade-50 peer-checked:text-jade-800 transition">
+                  男 (Male)
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">答题时限体验</label>
+            <div class="text-xs text-stone-500 py-2.5">
+              全套共 67 题，请根据近<strong>這一年的实际身心感受</strong>如实作答。预计用时 5~8 分钟。
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row items-center gap-4">
+          <button onclick="startAssessment()" class="w-full sm:w-auto px-8 py-3.5 bg-jade-800 hover:bg-jade-700 text-amber-50 font-serif font-medium text-base rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+            开始自测
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+          <div class="text-xs text-stone-400">
+            * 结果按国标算法：回答《中医体质问卷表》中的全部问题，每一题按照5级评分，计算原始分和转化分，依标准判定体质类型。
+          </div>
+        </div>
+      </div>
+
+      <!-- 九种体质特色说明速查卡片 -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-stone-200/70 shadow-2xs">
+          <div class="font-serif font-bold text-stone-800 flex items-center justify-between">
+            <span>平和体质</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">理想体质</span>
+          </div>
+          <p class="text-xs text-stone-500 mt-1.5">体态匀称、面色红润、精力充沛、随和开朗、脏腑气血运行调畅。</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-stone-200/70 shadow-2xs">
+          <div class="font-serif font-bold text-stone-800 flex items-center justify-between">
+            <span>虚性体质</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800">气虚 / 阳虚 / 阴虚</span>
+          </div>
+          <p class="text-xs text-stone-500 mt-1.5">或易倦神疲、呼吸气短；或畏寒肢冷；或口干手足心烦热、盗汗颧红。</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-stone-200/70 shadow-2xs">
+          <div class="font-serif font-bold text-stone-800 flex items-center justify-between">
+            <span>实性体質</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-800">痰湿/湿热/血瘀/气郁/过敏</span>
+          </div>
+          <p class="text-xs text-stone-500 mt-1.5">涵盖水液内停、湿热蕴结、血脉阻滞、情志抑郁及易过敏等复杂病理倾向。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 阶段 2: 答题页面 -->
+    <section id="section-quiz" class="hidden space-y-6">
+      <!-- 答题进度条与分类快速切换导航 -->
+      <div class="bg-white border border-stone-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-serif font-bold text-stone-800" id="current-category-name">气虚质</span>
+              <span class="text-xs text-stone-400" id="current-category-range">第 1 / 9 页</span>
+            </div>
+            <p class="text-xs text-stone-500 mt-0.5" id="current-category-desc">元气不足，以疲乏、气短、自汗等气虚表现为主要特征。</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold text-jade-700 bg-jade-50 border border-jade-200 px-2.5 py-1 rounded-full whitespace-nowrap" id="progress-text">
+              已完成 0 / 67 题 (0%)
+            </span>
+          </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
+          <div id="progress-bar-fill" class="bg-jade-600 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <!-- 体质分类横向切换标签 (可点击直接切换) -->
+        <div class="flex items-center gap-2 mt-4 overflow-x-auto pb-1 text-xs select-none" id="category-tabs-container">
+          <!-- JS 动态渲染各体质分类小徽章 -->
+        </div>
+      </div>
+
+      <!-- 题目卡片列表容器 -->
+      <div id="questions-container" class="space-y-4">
+        <!-- 动态生成题目卡片 -->
+      </div>
+
+      <!-- 底部控制按钮 -->
+      <div class="flex items-center justify-between pt-2">
+        <button id="prev-btn" onclick="prevCategory()" class="px-5 py-2.5 rounded-xl border border-stone-300 text-stone-700 hover:bg-stone-100 text-sm font-medium transition disabled:opacity-40 disabled:pointer-events-none">
+          上一页
+        </button>
+
+        <div class="flex items-center gap-3">
+          <button id="next-btn" onclick="nextCategory()" class="px-6 py-2.5 rounded-xl bg-jade-800 hover:bg-jade-700 text-white text-sm font-medium shadow-sm transition">
+            下一页
+          </button>
+          <button id="submit-quiz-btn" onclick="validateAndSubmit()" class="hidden px-7 py-2.5 rounded-xl bg-vermilion-600 hover:bg-vermilion-500 text-white text-sm font-serif font-medium shadow-md transition">
+            宗成提交辨识分析
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 阶段 3: 诊断报告页面 -->
+    <section id="section-report" class="hidden space-y-8">
+      
+      <!-- 报告封面卡片（国风古典设计） -->
+      <div class="bg-white border-2 border-stone-200 rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden print-shadow-none">
+        <!-- 印章装饰 -->
+        <div class="absolute right-6 top-6 flex items-center gap-2 select-none opacity-80 no-print">
+          <div class="chinese-seal px-1.5 py-2 text-xs font-bold rounded border-red-700 text-red-700">
+            中正平和
+          </div>
+          <div class="chinese-seal px-1.5 py-2 text-xs font-bold rounded border-jade-800 text-jade-800">
+            国标鉴别
+          </div>
+        </div>
+
+        <div class="max-w-2xl">
+          <div class="text-xs font-bold tracking-widest text-stone-400 uppercase">TCM Constitutional Health Analysis Report</div>
+          <h2 class="text-2xl sm:text-3xl font-serif font-bold text-stone-900 mt-1">中医体质分类报告</h2>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500 mt-2">
+            <span>受测对象：<strong class="text-stone-800" id="report-user-name">李先生</strong></span>
+            <span>生理性别：<strong class="text-stone-800" id="report-user-gender">女</strong></span>
+            <span>测评时间：<strong class="text-stone-800" id="report-date">2026-10-29</strong></span>
+            <span>参照标准：<strong>ZYYXH/T157-2009</strong></span>
+          </div>
+        </div>
+
+        <!-- 核心结论展台 -->
+        <div class="mt-8 p-6 rounded-2xl bg-stone-50 border border-stone-200/90 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          <div class="md:col-span-2 space-y-2">
+            <div class="text-xs font-semibold text-stone-500 uppercase tracking-wide">综合判定结论</div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <span id="primary-constitution-badge" class="font-serif text-2xl sm:text-3xl font-black text-jade-900">
+                平和质
+              </span>
+              <span id="primary-status-tag" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                典型体质
+              </span>
+            </div>
+            <p id="constitution-summary-desc" class="text-sm text-stone-600 leading-relaxed pt-1">
+              正在分析您的综合体质画像...
+            </p>
+            <div id="secondary-constitution-container" class="text-xs text-stone-500 pt-2 flex flex-wrap items-center gap-1.5">
+              <!-- 兼夹体质或倾向列表 -->
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-stone-200 text-center space-y-1">
+            <div class="text-xs text-stone-500">主体质转化分</div>
+            <div class="text-3xl sm:text-4xl font-serif font-black text-jade-800" id="primary-score-display">
+              --
+            </div>
+            <div class="text-[11px] text-stone-400" id="primary-score-hint">转化分 $\ge 40$ 判定为偏颇是</div>
+          </div>
+        </div>
+
+        <!-- 判定准则快捷图例说明 -->
+        <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-stone-500 px-1">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-vermilion-500"></span>偏颇判定: 转化分 ≥ 40</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>倾向判定: 30 ~ 39 分</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>平和质: ≥ 60 且其余&lt;30</span>
+          </div>
+          <span class="text-stone-400 hidden sm:inline">偏颇体质分数越低，阴阳气血平衡度越佳</span>
+        </div>
+      </div>
+
+      <!-- 九维雷达图与得分详情表 (并列) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- 雷达图展示卡片 -->
+        <div class="lg:col-span-5 bg-white border border-stone-200 rounded-3xl p-6 shadow-sm flex flex-col items-center">
+          <div class="w-full flex items-center justify-between mb-2">
+            <h3 class="font-serif font-bold text-stone-800 text-base">九大体质偏颇度雷达图</h3>
+            <span class="text-xs text-stone-400">0~100 转化分值</span>
+          </div>
+          <div class="relative w-full max-w-[340px] aspect-square flex items-center justify-center my-2">
+            <canvas id="tcmRadarChart"></canvas>
+          </div>
+          <div class="w-full text-center text-xs text-stone-500 mt-2 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
+            外层红圈代表 <strong>40分警戒线（是）</strong>，橙圈代表 <strong>30分倾向线</strong>
+          </div>
+        </div>
+
+        <!-- 9项体质得分明细表 -->
+        <div class="lg:col-span-7 bg-white border border-stone-200 rounded-3xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-serif font-bold text-stone-800 text-base">九维体质转化分详表</h3>
+            <span class="text-xs text-stone-400">依据国标数学换算法则</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-stone-200 text-stone-400 font-semibold">
+                  <th class="py-2.5 px-3">体质类型</th>
+                  <th class="py-2.5 px-2">题目数</th>
+                  <th class="py-2.5 px-2">原始分</th>
+                  <th class="py-2.5 px-2">转化分</th>
+                  <th class="py-2.5 px-3">偏颇评估进度</th>
+                  <th class="py-2.5 px-3 text-right">判定状态</th>
+                </tr>
+              </thead>
+              <tbody id="scores-table-body" class="divide-y divide-stone-100">
+                <!-- 由 JavaScript 动态插入各行得分 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 专业中医体质养生干预方案 (个性化定制) -->
+      <div class="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-4">
+          <div>
+            <h3 class="font-serif font-bold text-xl text-stone-900 flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-jade-700"></span>
+              针对您的主体质 [<span id="guide-constitution-title" class="text-jade-800">平和质</span>] 定制调护方案
+            </h3>
+            <p class="text-xs text-stone-500 mt-1">遵从“损其有余，补其不足，辨体调养”之中医治未病原则</p>
+          </div>
+          <span class="text-xs px-3 py-1 bg-stone-100 text-stone-600 rounded-full font-serif font-semibold self-start sm:self-auto">
+            治未病 · 辨体施策
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="prescriptions-grid">
+          <!-- 动态载入调护建议卡片 -->
+        </div>
+      </div>
+
+      <!-- 报告操作工具栏 -->
+      <div class="flex flex-wrap items-center justify-between gap-4 no-print pt-2 pb-12">
+        <div class="flex items-center gap-3">
+          <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-50 text-sm font-medium shadow-sm transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            打印 / 导出PDF档案
+          </button>
+          <button onclick="copySummaryText()" class="px-5 py-2.5 rounded-xl border border-stone-300 text-stone-700 hover:bg-stone-100 text-sm font-medium transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            复制结论摘要
+          </button>
+        </div>
+
+        <button onclick="confirmReset()" class="px-6 py-2.5 rounded-xl border border-jade-600 text-jade-700 hover:bg-jade-50 text-sm font-medium transition">
+          重新开始测评
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 提示弹窗 (Toast Modal) -->
+  <div id="custom-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-stone-200 transform transition-all text-center space-y-4">
+      <div id="modal-icon" class="w-12 h-12 mx-auto rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xl">
+        !
+      </div>
+      <div>
+        <h4 id="modal-title" class="font-serif font-bold text-lg text-stone-800">提示</h4>
+        <p id="modal-msg" class="text-xs text-stone-600 mt-2 leading-relaxed">提示信息</p>
+      </div>
+      <div id="modal-actions" class="flex items-center justify-center gap-3 pt-2">
+        <button onclick="closeModal()" class="w-full py-2 bg-jade-800 hover:bg-jade-700 text-white rounded-xl text-xs font-medium transition">
+          我知道了
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速填入演示数据弹窗 -->
+  <div id="demo-modal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-stone-200 text-left space-y-4">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+        <h4 class="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
+          <span>⚡</span> 一键载入典型体质演示数据
+        </h4>
+        <button onclick="closeDemoModal()" class="text-stone-400 hover:text-stone-600 text-xl font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-stone-500">
+        为了方便评委或使用者直接预览九维雷达图和调理方案，系统提供预设的标准作答数据包：
+      </p>
+
+      <div class="space-y-2.5">
+        <button onclick="applyPreset('pinghe')" class="w-full text-left p-3 rounded-xl border border-stone-200 hover:border-jade-600 hover:bg-jade-50/50 transition">
+          <div class="text-xs font-bold text-stone-800">【典型平和质】标准演示样本</div>
+          <div class="text-[11px] text-stone-500 mt-0.5">平和质得分 &gt; 80分，其余偏颇体质均 &lt; 20分，身心健康调和。</div>
+        </button>
+
+        <button onclick="applyPreset('qixu_tanshi')" class="w-full text-left p-3 rounded-xl border border-stone-200 hover:border-jade-600 hover:bg-jade-50/50 transition">
+          <div class="text-xs font-bold text-stone-800">【气虚兼痰湿质】复合偏颇样本</div>
+          <div class="text-[11px] text-stone-500 mt-0.5">易疲乏气短、少气懒言、腹满体胖、胸闷痰多，常见于久坐白领。</div>
+        </button>
+
+        <button onclick="applyPreset('shire_xueyu')" class="w-full text-left p-3 rounded-xl border border-stone-200 hover:border-jade-600 hover:bg-jade-50/50 transition">
+          <div class="text-xs font-bold text-stone-800">【湿热兼血瘀质】典型偏颇样本</div>
+          <div class="text-[11px] text-stone-500 mt-0.5">油光痤疮、口苦便黏、黑眼圈、舌质紫暗、局部刺痛。</div>
+        </button>
+
+        <button onclick="applyPreset('yangxu')" class="w-full text-left p-3 rounded-xl border border-stone-200 hover:border-jade-600 hover:bg-jade-50/50 transition">
+          <div class="text-xs font-bold text-stone-800">【典型阳虚质】手足畏寒样本</div>
+          <div class="text-[11px] text-stone-500 mt-0.5">极度怕冷、手脚冰凉、胃寒喜热饮、稍受凉即腹泻。</div>
+        </button>
+      </div>
+
+      <div class="pt-2 text-right">
+        <button onclick="closeDemoModal()" class="px-4 py-1.5 rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 text-xs">
+          取消
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-auto py-6 border-t border-stone-200/60 bg-white/50 text-center text-xs text-stone-400 no-print">
+    <div class="max-w-6xl mx-auto px-4">
+      <p>© 依据中华中医药学会《中医体质分类与判定》编制 | 仅供健康养生与体质筛查参考，非临床诊断依据</p>
+    </div>
+  </footer>
+
+  <!-- 核心逻辑脚本 -->
+  <script>
+    /* ==========================================================================
+       1. 中医九大体质标准题库与数据库定义 (ZYYXH/T157-2009)
+       ========================================================================== */
+    const TCM_CATEGORIES = [
+      {
+        key: 'qixu',
+        name: '气虚质',
+        desc: '元气不足，以疲乏、气短、自汗等气虚表现为主要特征。',
+        questions: [
+          { id: 'qx1', text: '您容易疲乏吗？' },
+          { id: 'qx2', text: '您容易气短(呼吸短促，接不上气)吗？' },
+          { id: 'qx3', text: '您容易心慌吗？' },
+          { id: 'qx4', text: '您容易头晕或站起时眩晕吗？' },
+          { id: 'qx5', text: '您比别人容易患感冒吗？' },
+          { id: 'qx6', text: '您喜欢安静、懒得说话吗？' },
+          { id: 'qx7', text: '您说话声音低弱无力吗？' },
+          { id: 'qx8', text: '您活动量稍微大一点就容易出虚汗吗？' }
+        ]
+      },
+      {
+        key: 'yangxu',
+        name: '阳虚质',
+        desc: '阳气不足，以虚寒表现为主要特征，耐夏不耐冬。',
+        questions: [
+          { id: 'yx1', text: '您手脚发凉吗？' },
+          { id: 'yx2', text: '您胃部、背部或腰膝部怕冷吗？' },
+          { id: 'yx3', text: '您感到怕冷、衣服比别人穿得多吗？' },
+          { id: 'yx4', text: '您比一般人耐受不了寒冷(冬天的寒冷，夏天的冷气、电扇等)吗？' },
+          { id: 'yx5', text: '您比别人容易患感冒吗？' },
+          { id: 'yx6', text: '您吃(喝)凉的东西会感到不舒服或者怕吃(喝)凉东西吗？' },
+          { id: 'yx7', text: '您受凉或吃(喝)凉的东西后，容易腹泻(拉肚子)吗？' }
+        ]
+      },
+      {
+        key: 'yinxu',
+        name: '阴虚质',
+        desc: '体内津液阴血不足，以口燥咽干、手足心热等虚热表现为主要特征。',
+        questions: [
+          { id: 'yn1', text: '您感到手脚心发热吗？' },
+          { id: 'yn2', text: '您感觉身体、脸上发热吗？' },
+          { id: 'yn3', text: '您皮肤或口唇干吗？' },
+          { id: 'yn4', text: '您口唇的颜色比一般人红吗？' },
+          { id: 'yn5', text: '您容易便秘或大便干燥吗？' },
+          { id: 'yn6', text: '您面颊潮红或偏红吗？' },
+          { id: 'yn7', text: '您感到眼睛干涩吗？' },
+          { id: 'yn8', text: '您感到口干咽燥、总想喝水吗？' }
+        ]
+      },
+      {
+        key: 'tanshi',
+        name: '痰湿质',
+        desc: '痰湿凝聚，以体态肥胖、腹部肥满、口黏苔腻等为主要特征。',
+        questions: [
+          { id: 'ts1', text: '您感到胸闷或腹部胀满吗？' },
+          { id: 'ts2', text: '您感到身体沉重不爽快、不轻松吗？' },
+          { id: 'ts3', text: '您腹部肥满松软吗？' },
+          { id: 'ts4', text: '您额头油脂分泌多吗？' },
+          { id: 'ts5', text: '您上眼皮比别人肿(轻微隆起)吗？' },
+          { id: 'ts6', text: '您嘴里有黏黏的感觉吗？' },
+          { id: 'ts7', text: '您平时痰多，特别是咽喉部总感到有痰堵着吗？' },
+          { id: 'ts8', text: '您舌苔厚腻或出汗黏腻不爽吗？' }
+        ]
+      },
+      {
+        key: 'shire',
+        name: '湿热质',
+        desc: '湿热内蕴，以面垢油光、口苦、苔黄腻等湿热表现为主要特征。',
+        questions: [
+          { id: 'sr1', text: '您面部或鼻部有油腻感或者油光发亮吗？' },
+          { id: 'sr2', text: '您容易生痤疮或疮疖吗？' },
+          { id: 'sr3', text: '您感到口苦或口臭、嘴里有异味吗？' },
+          { id: 'sr4', text: '您大便黏滞不爽、有解不尽的感觉吗？' },
+          { id: 'sr5', text: '您小便时尿道有发热感、尿色浓黄吗？' },
+          { 
+            id: 'sr6', 
+            text: '性别专属题', 
+            isGenderSpecific: true,
+            femaleText: '您带下色黄(白带量多且色黄)吗？',
+            maleText: '您阴囊部位潮湿发凉吗？'
+          },
+          { id: 'sr7', text: '您容易感到身体困重、四肢乏力、午后尤甚吗？' }
+        ]
+      },
+      {
+        key: 'xueyu',
+        name: '血瘀质',
+        desc: '血行不畅，以肤色晦暗、舌暗脉涩等血瘀表现为主要特征。',
+        questions: [
+          { id: 'xy1', text: '您的皮肤在不知不觉中会出现青紫瘀斑(皮下出血)吗？' },
+          { id: 'xy2', text: '您两颧部有细微红丝(毛细血管扩张)吗？' },
+          { id: 'xy3', text: '您身体局部有刺痛感且固定不移吗？' },
+          { id: 'xy4', text: '您面色晦暗或容易出现色素沉着、褐斑吗？' },
+          { id: 'xy5', text: '您容易有黑眼圈吗？' },
+          { id: 'xy6', text: '您容易忘事(健忘)吗？' },
+          { id: 'xy7', text: '您口唇颜色偏暗或呈紫暗色吗？' }
+        ]
+      },
+      {
+        key: 'qiyu',
+        name: '气郁质',
+        desc: '气机郁滞，以神情抑郁、忧虑脆弱等气郁表现为主要特征。',
+        questions: [
+          { id: 'qy1', text: '您感到闷闷不乐、情绪低沉吗？' },
+          { id: 'qy2', text: '您容易精神紧张、焦虑不安吗？' },
+          { id: 'qy3', text: '您多愁善感、情感脆弱吗？' },
+          { id: 'qy4', text: '您容易感到害怕或容易受惊吓吗？' },
+          { id: 'qy5', text: '您胁肋部或乳房胀痛吗？' },
+          { id: 'qy6', text: '您无缘无故叹气吗？' },
+          { id: 'qy7', text: '您咽喉部有异物感，吐之不出、咽之不下(梅核气)吗？' }
+        ]
+      },
+      {
+        key: 'tebing',
+        name: '特禀质',
+        desc: '先天禀赋不足或异常，以过敏反应、变应性疾病等为主要特征。',
+        questions: [
+          { id: 'tb1', text: '您没有感冒时也会打喷嚏吗？' },
+          { id: 'tb2', text: '您没有感冒时也会鼻塞、流鼻涕吗？' },
+          { id: 'tb3', text: '您因季节变化、温度变化或异味容易咳喘吗？' },
+          { id: 'tb4', text: '您容易过敏(对药物、食物、气味、花粉等)吗？' },
+          { id: 'tb5', text: '您皮肤容易起荨麻疹(风团、发痒红疹)吗？' },
+          { id: 'tb6', text: '您的皮肤因过敏出现过紫癜(紫红色瘀点瘀斑)吗？' },
+          { id: 'tb7', text: '您的皮肤一抓就红，并出现抓痕(皮肤划痕征)吗？' }
+        ]
+      },
+      {
+        key: 'pinghe',
+        name: '平和质',
+        desc: '阴阳气血调和，以体态适中、面色润泽、精力充沛等为主要特征。',
+        questions: [
+          { id: 'ph1', text: '您精力充沛吗？', isReverse: false },
+          { id: 'ph2', text: '您容易疲乏吗？', isReverse: true },
+          { id: 'ph3', text: '您说话声音低弱无力吗？', isReverse: true },
+          { id: 'ph4', text: '您感到闷闷不乐、情绪低沉吗？', isReverse: true },
+          { id: 'ph5', text: '您比一般人耐受不了寒冷吗？', isReverse: true },
+          { id: 'ph6', text: '您能适应自然和社会环境的变化吗？', isReverse: false },
+          { id: 'ph7', text: '您容易失眠(入睡困难或易醒多梦)吗？', isReverse: true },
+          { id: 'ph8', text: '您容易忘事(健忘)吗？', isReverse: true }
+        ]
+      }
+    ];
+
+    // 5级选项定义
+    const SCALE_OPTIONS = [
+      { score: 1, label: '没有', desc: '从不' },
+      { score: 2, label: '很少', desc: '偶尔' },
+      { score: 3, label: '有时', desc: '部分时间' },
+      { score: 4, label: '经常', desc: '较多时间' },
+      { score: 5, label: '总是', desc: '持续如此' }
+    ];
+
+    // 体质调养个性化指南库
+    const TCM_CARE_GUIDES = {
+      pinghe: {
+        nature: '阴阳平衡，脏腑协调',
+        diet: {
+          good: '五谷杂粮、山药、枸杞、莲子、时令蔬菜水果，荤素均衡搭。',
+          bad: '忌暴饮暴食、过食油腻辛辣或过食冰镇生冷。',
+          dish: '【四神健脾排骨汤】山药、茯苓、莲子、芡实各15g煲汤，健脾固本。'
+        },
+        tea: '【四季养生饮】麦冬3g、枸杞5g、菊花2朵，温和调神。',
+        acupuncture: '【足三里、神阙】常按足三里以健脾和胃、扶正培元；摩腹培中。',
+        lifestyle: '劳逸结合，起居有常；多接触大自然，顺应四时生息。',
+        exercise: '慢跑、八段锦、太极拳、游泳等各种适度运动皆宜，保持活力。'
+      },
+      qixu: {
+        nature: '元气亏虚，脏腑功能衰退',
+        diet: {
+          good: '黄芪、人参、大枣、山药、白扁豆、香菇、鸡肉、糯米。',
+          bad: '忌破气耗气食物，如生萝卜、槟榔、空心菜、浓茶。',
+          dish: '【黄芪党参乌鸡汤】黄芪20g、党参15g、大枣5枚，乌鸡半只慢炖。'
+        },
+        tea: '【芪枣固本茶】生黄芪10g、红枣2枚、枸杞5g，沸水焖泡，补气升阳。',
+        acupuncture: '【气海、关元、足三里】每日以拇指指腹温和按揉各3分钟，益气健运。',
+        lifestyle: '注意防风避寒，不可过度熬夜与剧烈大汗；午间小憩20分钟养气。',
+        exercise: '宜柔缓运动，如八段锦“双手托天理三焦”、太极步；避免大汗耗气。'
+      },
+      yangxu: {
+        nature: '体内阳气亏虚，温煦失职',
+        diet: {
+          good: '生姜、羊肉、肉桂、核桃、韭菜、茴香、黑芝麻、暖胃热汤。',
+          bad: '严禁冰冻冷饮、苦瓜、绿豆、生鱼片等寒凉滑利之品。',
+          dish: '【当归生姜羊肉汤】当归15g、生姜30g、羊肉250g炖汤，温中补阳。'
+        },
+        tea: '【红糖姜枣茶】干姜3片、红糖适量、大枣3枚，温阳驱寒。',
+        acupuncture: '【命门、关元、神阙】可施以温和艾灸，每穴灸10分钟，驱散阴寒。',
+        lifestyle: '多晒太阳（尤其晒背暖督脉）；注意足部、腰背与下腹防寒保暖。',
+        exercise: '春夏养阳，快走、太极拳等以微汗为度；忌大冬天室外剧烈消耗。'
+      },
+      yinxu: {
+        nature: '阴液不足，水不制火，虚火内扰',
+        diet: {
+          good: '百合、银耳、麦冬、沙参、鸭肉、黑豆、桑葚、枸杞、梨。',
+          bad: '忌吃辛辣温燥食物，如羊肉、辣椒、花椒、生姜、烈酒。',
+          dish: '【沙参麦冬老鸭汤】沙参15g、麦冬15g、百合20g炖老鸭，滋阴润燥。'
+        },
+        tea: '【石斛西洋参饮】铁皮石斛3g、西洋参片3g，冲泡代茶，生津敛阴。',
+        acupuncture: '【三阴交、太溪、涌泉】太溪为肾经原穴，每日睡前点按揉搓涌泉。',
+        lifestyle: '保证充足睡眠，切忌熬夜（耗损真阴）；保持室内湿度与情绪安宁。',
+        exercise: '适合静坐、瑜伽、散步、六字诀之“呵”字诀；不宜激烈出汗运动。'
+      },
+      tanshi: {
+        nature: '脾失健运，水湿停聚，痰浊阻滞',
+        diet: {
+          good: '白萝卜、冬瓜、薏苡仁、赤小豆、茯苓、陈皮、荷叶、山楂。',
+          bad: '严格控制肥肉、甜食、油炸烧烤、甜饮料及暴饮暴食。',
+          dish: '【冬瓜薏苡仁排骨汤】冬瓜带皮200g、炒薏米30g煲汤，利水化浊。'
+        },
+        tea: '【陈皮茯苓茶】新会陈皮5g、茯苓10g煎水代茶饮，健脾燥湿。',
+        acupuncture: '【丰隆、中脘、阴陵泉】丰隆穴为化痰要穴，每日强力按揉3分钟。',
+        lifestyle: '衣着宜透气，居处忌潮湿；饭后切忌久卧，宜缓行百步。',
+        exercise: '需保持一定强度的运动：慢跑、爬坡、球类运动，必须坚持出汗排湿。'
+      },
+      shire: {
+        nature: '湿热交困，热蒸湿动，蕴结脏腑',
+        diet: {
+          good: '绿豆、丝瓜、苦瓜、黄瓜、芹菜、赤小豆、鸭肉、荷叶、藕。',
+          bad: '戒烟限酒，忌食火锅、烧烤、羊肉、韭菜及油腻滋补药材。',
+          dish: '【绿豆薏米土茯苓饮】土茯苓20g、生薏米30g、绿豆30g煮粥清热解毒。'
+        },
+        tea: '【金银荷叶清凉饮】金银花5g、淡竹叶3g、干荷叶3g冲泡，清利湿热。',
+        acupuncture: '【曲池、内庭、阴陵泉】点按内庭清泻胃火，曲池疏风清热。',
+        lifestyle: '保持皮肤干爽清洁，衣着天然棉麻；勿熬夜以免加重内热。',
+        exercise: '适宜大运动量有氧运动，如长跑、游泳，排泄体内滞留积热。'
+      },
+      xueyu: {
+        nature: '血行迟缓不畅，脉络瘀阻',
+        diet: {
+          good: '山楂、黑木耳、三七、红糖、玫瑰花、黑豆、洋葱、香菇。',
+          bad: '忌食寒凉冰冻、高脂高胆固醇、浓厚油腻黏腻食物。',
+          dish: '【山楂桃仁红枣粥】生山楂15g、桃仁6g、大米适量煮粥，活血化瘀。'
+        },
+        tea: '【三七玫瑰活血茶】玫瑰花5朵、三七粉2g、山楂片3g冲服，行气通络。',
+        acupuncture: '【血海、膈俞、合谷】每日按压血海穴（屈膝内侧上方），活血通经。',
+        lifestyle: '注意防寒保暖以防寒凝血滞；保持愉悦畅快心境，促进气血周流。',
+        exercise: '八段锦、太极拳、经络拍打操，促进全身微循环，改善末梢供血。'
+      },
+      qiyu: {
+        nature: '气机郁结，疏泄失职，神情抑郁',
+        diet: {
+          good: '佛手、柑橘、玫瑰花、香橼、萝卜、金橘、洋葱、全麦。',
+          bad: '忌收敛酸涩、闭气之品；避免临睡前饮浓茶咖啡。',
+          dish: '【佛手疏肝百合粥】干佛手片10g、干百合20g同大米煮粥，理气宽胸。'
+        },
+        tea: '【疏肝解郁玫瑰茶】法兰西玫瑰5朵、陈皮3g、薄荷少许沸水冲泡。',
+        acupuncture: '【太冲、膻中、内关】太冲为肝经要穴，配合按揉胸口膻中开郁散闷。',
+        lifestyle: '多听羽调、角调古典民乐；多向亲友倾诉交流；参与户外旅行社交。',
+        exercise: '推荐登山、慢跑、跳舞等有呼喊、宣泄感的大动作运动以舒畅气机。'
+      },
+      tebing: {
+        nature: '禀赋不耐，卫外失固，敏感多变',
+        diet: {
+          good: '黄芪、灵芝、防风、山药、枸杞、大枣等益气固表之温平之品。',
+          bad: '禁食已知过敏原；慎食海鲜发物、蚕蛹、鹅肉、辛辣腥味刺激品。',
+          dish: '【玉屏风灵芝煲鸡】黄芪15g、白术10g、防风6g、灵芝片10g煲鸡汤。'
+        },
+        tea: '【固表玉屏饮】黄芪5g、大枣2枚开水焖泡，补脾肺之气固表御邪。',
+        acupuncture: '【迎香、足三里、曲池】换季时按揉鼻旁迎香穴，增强鼻黏膜抗敏力。',
+        lifestyle: '起居避开花粉、尘螨、宠物皮屑环境；温差大时佩戴口罩防冷风。',
+        exercise: '循序渐进进行平缓的有氧运动，增强肺脾之卫外之气。'
+      }
+    };
+
+    /* ==========================================================================
+       2. 全局状态与答题数据管理
+       ========================================================================== */
+    let currentCategoryIndex = 0;
+    let userAnswers = {}; // { questionId: score (1~5) }
+    let userGender = 'female';
+    let userName = '求真者';
+    let radarChartInstance = null;
+
+    // 计算总题数
+    const TOTAL_QUESTIONS_COUNT = TCM_CATEGORIES.reduce((acc, cat) => acc + cat.questions.length, 0);
+
+    /* ==========================================================================
+       3. 页面流转与初始化
+       ========================================================================== */
+    function startAssessment() {
+      const nameInput = document.getElementById('user-name');
+      userName = nameInput.value.trim() || '受测者';
+      
+      const genderRadios = document.getElementsByName('gender');
+      for (const r of genderRadios) {
+        if (r.checked) userGender = r.value;
+      }
+
+      document.getElementById('section-intro').classList.add('hidden');
+      document.getElementById('section-quiz').classList.remove('hidden');
+      document.getElementById('restart-btn-top').classList.remove('hidden');
+
+      renderCategoryTabs();
+      renderCurrentCategory();
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderCategoryTabs() {
+      const container = document.getElementById('category-tabs-container');
+      container.innerHTML = '';
+      
+      TCM_CATEGORIES.forEach((cat, idx) => {
+        const isDone = isCategoryCompleted(cat);
+        const isActive = idx === currentCategoryIndex;
+        
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `px-3 py-1.5 rounded-lg border font-medium flex items-center gap-1.5 whitespace-nowrap transition ${
+          isActive 
+            ? 'bg-jade-800 text-amber-50 border-jade-800 shadow-xs' 
+            : isDone
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+        }`;
+
+        let icon = '';
+        if (isDone) {
+          icon = `<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+        } else {
+          icon = `<span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400' : 'bg-stone-300'}"></span>`;
+        }
+
+        btn.innerHTML = `${icon}<span>${cat.name}</span>`;
+        btn.onclick = () => switchCategory(idx);
+        container.appendChild(btn);
+      });
+    }
+
+    function isCategoryCompleted(cat) {
+      return cat.questions.every(q => userAnswers[q.id] !== undefined);
+    }
+
+    function switchCategory(idx) {
+      currentCategoryIndex = idx;
+      renderCurrentCategory();
+      renderCategoryTabs();
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+
+    function prevCategory() {
+      if (currentCategoryIndex > 0) {
+        switchCategory(currentCategoryIndex - 1);
+      }
+    }
+
+    function nextCategory() {
+      if (currentCategoryIndex < TCM_CATEGORIES.length - 1) {
+        switchCategory(currentCategoryIndex + 1);
+      } else {
+        validateAndSubmit();
+      }
+    }
+
+    function renderCurrentCategory() {
+      const cat = TCM_CATEGORIES[currentCategoryIndex];
+      document.getElementById('current-category-name').textContent = cat.name;
+      document.getElementById('current-category-range').textContent = `第 ${currentCategoryIndex + 1} / ${TCM_CATEGORIES.length} 模块`;
+      document.getElementById('current-category-desc').textContent = cat.desc;
+
+      const container = document.getElementById('questions-container');
+      container.innerHTML = '';
+
+      cat.questions.forEach((q, qIndex) => {
+        let questionText = q.text;
+        if (q.isGenderSpecific) {
+          questionText = userGender === 'male' ? q.maleText : q.femaleText;
+        }
+
+        const card = document.createElement('div');
+        card.className = "bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-jade-300 transition-all";
+        card.id = `qcard-${q.id}`;
+
+        const isAnswered = userAnswers[q.id] !== undefined;
+
+        let optionsHtml = '';
+        SCALE_OPTIONS.forEach(opt => {
+          const isSelected = userAnswers[q.id] === opt.score;
+          optionsHtml += `
+            <button type="button" 
+              onclick="selectAnswer('${q.id}', ${opt.score})" 
+              class="flex-1 min-w-[70px] py-2.5 px-2 rounded-xl text-center border transition-all ${
+                isSelected 
+                  ? 'bg-jade-800 text-amber-50 border-jade-800 font-bold shadow-xs' 
+                  : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 hover:border-stone-300'
+              }">
+              <div class="text-xs sm:text-sm font-serif">${opt.label}</div>
+              <div class="text-[10px] sm:text-xs opacity-75">${opt.desc}</div>
+            </button>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center text-xs font-semibold">
+                ${qIndex + 1}
+              </span>
+              <h3 class="text-sm sm:text-base font-serif font-medium text-stone-900 leading-snug">
+                ${questionText}
+                ${q.isReverse ? '<span class="text-[11px] font-sans font-normal text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded ml-1 border border-amber-200">逆向计分</span>' : ''}
+              </h3>
+            </div>
+            ${isAnswered ? '<span class="text-xs text-emerald-600 font-semibold px-2 py-0.5 bg-emerald-50 rounded-full">已选</span>' : '<span class="text-xs text-stone-300">待选</span>'}
+          </div>
+          <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5 mt-2">
+            ${optionsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // 底部按钮更新
+      document.getElementById('prev-btn').disabled = currentCategoryIndex === 0;
+      
+      const nextBtn = document.getElementById('next-btn');
+      const submitBtn = document.getElementById('submit-quiz-btn');
+
+      if (currentCategoryIndex === TCM_CATEGORIES.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function selectAnswer(qid, score) {
+      userAnswers[qid] = score;
+      renderCurrentCategory();
+      renderCategoryTabs();
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const answeredCount = Object.keys(userAnswers).length;
+      const pct = Math.round((answeredCount / TOTAL_QUESTIONS_COUNT) * 100);
+      
+      document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+      document.getElementById('progress-text').textContent = `已完成 ${answeredCount} / ${TOTAL_QUESTIONS_COUNT} 题 (${pct}%)`;
+    }
+
+    /* ==========================================================================
+       4. 严格国标计分与体质判定核心算法
+       ========================================================================== */
+    function calculateResults() {
+      const results = {};
+
+      TCM_CATEGORIES.forEach(cat => {
+        let rawScore = 0;
+        const qCount = cat.questions.length;
+
+        cat.questions.forEach(q => {
+          let score = userAnswers[q.id] || 1;
+          // 平和质逆向计分题目翻转: 1->5, 2->4, 3->3, 4->2, 5->1
+          if (q.isReverse) {
+            score = 6 - score;
+          }
+          rawScore += score;
+        });
+
+        // 国标转化分公式: [(原始分 - 题目数) / (题目数 × 4)] × 100
+        const transformedScore = ((rawScore - qCount) / (qCount * 4)) * 100;
+        const roundedScore = Math.round(transformedScore * 10) / 10;
+
+        results[cat.key] = {
+          key: cat.key,
+          name: cat.name,
+          qCount: qCount,
+          rawScore: rawScore,
+          score: roundedScore,
+          status: '否'
+        };
+      });
+
+      // 偏颇体质判定 (8种偏颇质)
+      const biasedKeys = ['qixu', 'yangxu', 'yinxu', 'tanshi', 'shire', 'xueyu', 'qiyu', 'tebing'];
+      biasedKeys.forEach(k => {
+        const sc = results[k].score;
+        if (sc >= 40) {
+          results[k].status = '是';
+        } else if (sc >= 30) {
+          results[k].status = '倾向是';
+        } else {
+          results[k].status = '否';
+        }
+      });
+
+      // 平和质综合判定:
+      // 平和质转化分 >= 60, 且其余8种偏颇体质转化分均 < 30 为“是”
+      // 平和质转化分 >= 60, 且其余8种偏颇体质转化分均 < 40，但有 30~39 之间为“基本是平和质，有偏颇倾向”
+      // 若有任意偏颇体质 >= 40，则不属于平和质
+      const pingheScore = results['pinghe'].score;
+      const otherScores = biasedKeys.map(k => results[k].score);
+      const maxOtherScore = Math.max(...otherScores);
+
+      if (pingheScore >= 60) {
+        if (maxOtherScore < 30) {
+          results['pinghe'].status = '是';
+        } else if (maxOtherScore < 40) {
+          results['pinghe'].status = '基本是';
+        } else {
+          results['pinghe'].status = '否';
+        }
+      } else {
+        results['pinghe'].status = '否';
+      }
+
+      return results;
+    }
+
+    /* ==========================================================================
+       5. 提交校验与展示综合诊断报告
+       ========================================================================== */
+    function validateAndSubmit() {
+      // 检查是否全答完
+      const unanswered = [];
+      TCM_CATEGORIES.forEach((cat, cIdx) => {
+        cat.questions.forEach(q => {
+          if (userAnswers[q.id] === undefined) {
+            unanswered.push({ catName: cat.name, catIdx: cIdx, qText: q.text });
+          }
+        });
+      });
+
+      if (unanswered.length > 0) {
+        showModal(
+          '测评题目尚未全部作答',
+          `您还有 ${unanswered.length} 道题目未完成（例如：${unanswered[0].catName} 的题目）。为了确保国标计算准确，请完整回答所有条目。`,
+          '前往补充作答',
+          () => {
+            closeModal();
+            switchCategory(unanswered[0].catIdx);
+          }
+        );
+        return;
+      }
+
+      displayReport();
+    }
+
+    function displayReport() {
+      const results = calculateResults();
+
+      document.getElementById('section-quiz').classList.add('hidden');
+      document.getElementById('section-report').classList.remove('hidden');
+
+      // 基本档案信息填入
+      document.getElementById('report-user-name').textContent = userName;
+      document.getElementById('report-user-gender').textContent = userGender === 'female' ? '女' : '男';
+      
+      const now = new Date();
+      document.getElementById('report-date').textContent = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+      // 找出主体质与兼夹体质
+      const biasedKeys = ['qixu', 'yangxu', 'yinxu', 'tanshi', 'shire', 'xueyu', 'qiyu', 'tebing'];
+      
+      // 过滤出是偏颇体质 (≥40) 的列表，按分数从高到低排序
+      const definiteBiased = biasedKeys
+        .filter(k => results[k].status === '是')
+        .sort((a, b) => results[b].score - results[a].score);
+
+      const tendencyBiased = biasedKeys
+        .filter(k => results[k].status === '倾向是')
+        .sort((a, b) => results[b].score - results[a].score);
+
+      let primaryKey = 'pinghe';
+      let primaryTitle = '平和质';
+      let primaryStatusTag = '健康平和';
+      let summaryDesc = '';
+      let secondaryListHtml = '';
+
+      if (results['pinghe'].status === '是') {
+        primaryKey = 'pinghe';
+        primaryTitle = '平和质';
+        primaryStatusTag = '健康典型';
+        summaryDesc = '恭喜您！您的身心处于极佳的阴阳平衡状态，气血充足，脏腑功能调畅。精力充沛，抗病能力良好，请继续保持健康的生活作息。';
+      } else if (results['pinghe'].status === '基本是') {
+        primaryKey = 'pinghe';
+        primaryTitle = '基本平和质';
+        primaryStatusTag = '基本平和 (兼微偏)';
+        const tendencies = tendencyBiased.map(k => results[k].name).join('、');
+        summaryDesc = `您的体质总体趋于平和，阴阳基本协调；但在局部呈现轻微的【${tendencies}】倾向，稍加调养即可重归纯和境界。`;
+      } else if (definiteBiased.length > 0) {
+        primaryKey = definiteBiased[0];
+        primaryTitle = results[primaryKey].name;
+        primaryStatusTag = '典型偏颇体质';
+
+        if (definiteBiased.length > 1) {
+          const others = definiteBiased.slice(1).map(k => results[k].name).join('、');
+          summaryDesc = `您的主要体质表现为<strong>${primaryTitle}</strong>，同时兼夹有<strong>${others}</strong>特征。多重兼夹体质属于复合型偏颇，调理宜抓住主因，兼顾并调。`;
+        } else {
+          summaryDesc = `您的体质属于典型的<strong>${primaryTitle}</strong>，体内阴阳气血已出现相对明确的特异性失衡，建议遵从专属方案进行针对性起居与食疗调护。`;
+        }
+      } else if (tendencyBiased.length > 0) {
+        primaryKey = tendencyBiased[0];
+        primaryTitle = results[primaryKey].name;
+        primaryStatusTag = '偏颇倾向';
+        const allTend = tendencyBiased.map(k => results[k].name).join('、');
+        summaryDesc = `您目前未达到典型重度偏颇体质的判定标准，但呈现出【${allTend}】的发展倾向，正处于“未病”调护的最佳窗口期。`;
+      } else {
+        primaryKey = 'pinghe';
+        primaryTitle = '平和偏弱质';
+        primaryStatusTag = '亚健康平衡';
+        summaryDesc = '各单项偏颇得分均较低，但平和质得分不足以确诊，需关注整体亚健康调适与精神调摄。';
+      }
+
+      // 渲染兼夹标签
+      if (definiteBiased.length > 1 || tendencyBiased.length > 0) {
+        secondaryListHtml = '<span class="font-semibold text-stone-700">复合兼夹提示：</span>';
+        if (definiteBiased.length > 1) {
+          definiteBiased.slice(1).forEach(k => {
+            secondaryListHtml += `<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">兼夹${results[k].name}</span>`;
+          });
+        }
+        tendencyBiased.forEach(k => {
+          if (k !== primaryKey) {
+            secondaryListHtml += `<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">倾向${results[k].name}</span>`;
+          }
+        });
+      } else {
+        secondaryListHtml = '<span class="text-stone-400">无明显兼夹偏颇体质</span>';
+      }
+
+      document.getElementById('primary-constitution-badge').textContent = primaryTitle;
+      document.getElementById('primary-status-tag').textContent = primaryStatusTag;
+      document.getElementById('constitution-summary-desc').innerHTML = summaryDesc;
+      document.getElementById('secondary-constitution-container').innerHTML = secondaryListHtml;
+
+      const pScore = results[primaryKey].score;
+      document.getElementById('primary-score-display').textContent = pScore;
+      document.getElementById('guide-constitution-title').textContent = results[primaryKey].name;
+
+      // 渲染得分明细表
+      renderScoresTable(results, primaryKey);
+
+      // 渲染雷达图
+      renderRadarChart(results);
+
+      // 渲染个性化调护指南
+      renderPrescriptionGuide(primaryKey);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderScoresTable(results, primaryKey) {
+      const tbody = document.getElementById('scores-table-body');
+      tbody.innerHTML = '';
+
+      TCM_CATEGORIES.forEach(cat => {
+        const item = results[cat.key];
+        const tr = document.createElement('tr');
+        tr.className = item.key === primaryKey ? 'bg-jade-50/60 font-medium' : 'hover:bg-stone-50/50';
+
+        let badgeClass = 'bg-stone-100 text-stone-500';
+        if (item.status === '是') badgeClass = 'bg-rose-100 text-rose-800 border border-rose-200 font-bold';
+        else if (item.status === '基本是') badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold';
+        else if (item.status === '倾向是') badgeClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 flex items-center gap-1.5 font-serif text-stone-800">
+            ${item.key === primaryKey ? '<span class="w-1.5 h-1.5 rounded-full bg-jade-700"></span>' : ''}
+            ${item.name}
+          </td>
+          <td class="py-2.5 px-2 text-stone-500">${item.qCount}题</td>
+          <td class="py-2.5 px-2 text-stone-600 font-mono">${item.rawScore}</td>
+          <td class="py-2.5 px-2 font-mono font-bold ${item.score >= 40 ? 'text-vermilion-600' : item.score >= 30 ? 'text-amber-600' : 'text-stone-700'}">
+            ${item.score}
+          </td>
+          <td class="py-2.5 px-3">
+            <div class="w-full bg-stone-100 rounded-full h-1.5 max-w-[120px] overflow-hidden">
+              <div class="h-full ${item.score >= 40 ? 'bg-vermilion-500' : item.score >= 30 ? 'bg-amber-500' : 'bg-jade-600'}" style="width: ${Math.min(100, item.score)}%"></div>
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            <span class="inline-block px-2 py-0.5 rounded text-[11px] ${badgeClass}">
+              ${item.status}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderRadarChart(results) {
+      const ctx = document.getElementById('tcmRadarChart').getContext('2d');
+      if (radarChartInstance) {
+        radarChartInstance.destroy();
+      }
+
+      // 雷达图标签与数据映射
+      const labels = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质'];
+      const keys = ['pinghe', 'qixu', 'yangxu', 'yinxu', 'tanshi', 'shire', 'xueyu', 'qiyu', 'tebing'];
+      const dataValues = keys.map(k => results[k].score);
+
+      radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '您的体质转化分',
+            data: dataValues,
+            fill: true,
+            backgroundColor: 'rgba(45, 106, 79, 0.28)',
+            borderColor: '#2d6a4f',
+            pointBackgroundColor: '#1b4332',
+            pointBorderColor: '#ffffff',
+            pointHoverBackgroundColor: '#ffffff',
+            pointHoverBorderColor: '#1b4332',
+            borderWidth: 2,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            r: {
+              angleLines: {
+                color: 'rgba(0, 0, 0, 0.08)'
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.06)'
+              },
+              suggestedMin: 0,
+              suggestedMax: 100,
+              ticks: {
+                stepSize: 20,
+                backdropColor: 'transparent',
+                font: { size: 9 },
+                color: '#8c8c8c'
+              },
+              pointLabels: {
+                font: {
+                  family: '"Noto Serif SC", serif',
+                  size: 11,
+                  weight: '600'
+                },
+                color: '#2b2b2b'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw;
+                  let level = '否';
+                  if (val >= 40) level = '偏颇判定 (是)';
+                  else if (val >= 30) level = '倾向是';
+                  return ` 转化分: ${val} 分 (${level})`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderPrescriptionGuide(primaryKey) {
+      const guide = TCM_CARE_GUIDES[primaryKey] || TCM_CARE_GUIDES['pinghe'];
+      const grid = document.getElementById('prescriptions-grid');
+
+      grid.innerHTML = `
+        <!-- 饮食调养与药膳方 -->
+        <div class="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-3">
+          <div class="flex items-center gap-2 text-sm font-serif font-bold text-stone-800">
+            <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-xs">食</span>
+            饮食宜忌与推荐食疗
+          </div>
+          <div class="space-y-2 text-xs leading-relaxed text-stone-600">
+            <p><strong class="text-emerald-700">【宜食之品】</strong>${guide.diet.good}</p>
+            <p><strong class="text-rose-700">【忌口清单】</strong>${guide.diet.bad}</p>
+            <div class="p-2.5 rounded-xl bg-white border border-stone-200 text-stone-800 font-serif">
+              ${guide.diet.dish}
+            </div>
+          </div>
+        </div>
+
+        <!-- 专属代茶饮与汤品 -->
+        <div class="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-3">
+          <div class="flex items-center gap-2 text-sm font-serif font-bold text-stone-800">
+            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs">茶</span>
+            四时辨体茶饮方
+          </div>
+          <div class="space-y-2 text-xs leading-relaxed text-stone-600">
+            <div class="p-3 rounded-xl bg-white border border-stone-200 font-serif text-stone-800">
+              ${guide.tea}
+            </div>
+            <p class="text-[11px] text-stone-400">* 温馨提示：代茶饮宜现泡现饮，孕期或严重慢性病患者请遵循中医师面诊指导。</p>
+          </div>
+        </div>
+
+        <!-- 经络穴位保健 -->
+        <div class="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-3">
+          <div class="flex items-center gap-2 text-sm font-serif font-bold text-stone-800">
+            <span class="w-6 h-6 rounded-lg bg-jade-100 text-jade-800 flex items-center justify-center text-xs">穴</span>
+            经络腧穴推拿与保养
+          </div>
+          <div class="text-xs leading-relaxed text-stone-600 space-y-2">
+            <p class="font-serif text-stone-800 font-medium">${guide.acupuncture}</p>
+            <p class="text-stone-500">按法：以拇指指腹顺时针按揉至局部酸胀为度，每次每穴 2~3 分钟，每日 1~2 次。</p>
+          </div>
+        </div>
+
+        <!-- 起居情志与动静养生 -->
+        <div class="bg-stone-50/70 p-5 rounded-2xl border border-stone-200/80 space-y-3">
+          <div class="flex items-center gap-2 text-sm font-serif font-bold text-stone-800">
+            <span class="w-6 h-6 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center text-xs">养</span>
+            起居情志与形体锻炼
+          </div>
+          <div class="text-xs leading-relaxed text-stone-600 space-y-2">
+            <p><strong>【起居情志】</strong>${guide.lifestyle}</p>
+            <p><strong>【推荐锻炼】</strong>${guide.exercise}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       6. 演示预设数据应用 (Quick Demo Profiles)
+       ========================================================================== */
+    function openDemoModal() {
+      document.getElementById('demo-modal').classList.remove('hidden');
+    }
+
+    function closeDemoModal() {
+      document.getElementById('demo-modal').classList.add('hidden');
+    }
+
+    function applyPreset(type) {
+      closeDemoModal();
+      userAnswers = {};
+
+      // 默认全部填 1 (没有)
+      TCM_CATEGORIES.forEach(cat => {
+        cat.questions.forEach(q => {
+          userAnswers[q.id] = 1;
+        });
+      });
+
+      if (type === 'pinghe') {
+        // 平和质典型：平和质题目全部为健康回答
+        // 正向题 ph1, ph6 为 5；逆向题 ph2, ph3, ph4, ph5, ph7, ph8 为 1 (翻转后算5分)
+        userAnswers['ph1'] = 5;
+        userAnswers['ph6'] = 5;
+        userAnswers['ph2'] = 1;
+        userAnswers['ph3'] = 1;
+        userAnswers['ph4'] = 1;
+        userAnswers['ph5'] = 1;
+        userAnswers['ph7'] = 1;
+        userAnswers['ph8'] = 1;
+      } else if (type === 'qixu_tanshi') {
+        // 气虚 (高分) + 痰湿 (高分)
+        ['qx1', 'qx2', 'qx3', 'qx4', 'qx5', 'qx6', 'qx7', 'qx8'].forEach(id => userAnswers[id] = 4);
+        ['ts1', 'ts2', 'ts3', 'ts4', 'ts5', 'ts6', 'ts7', 'ts8'].forEach(id => userAnswers[id] = 4);
+        userAnswers['qx1'] = 5;
+        userAnswers['ts3'] = 5;
+      } else if (type === 'shire_xueyu') {
+        // 湿热 + 血瘀
+        ['sr1', 'sr2', 'sr3', 'sr4', 'sr5', 'sr6', 'sr7'].forEach(id => userAnswers[id] = 4);
+        ['xy1', 'xy2', 'xy3', 'xy4', 'xy5', 'xy6', 'xy7'].forEach(id => userAnswers[id] = 4);
+        userAnswers['sr1'] = 5;
+        userAnswers['xy4'] = 5;
+      } else if (type === 'yangxu') {
+        // 典型阳虚
+        ['yx1', 'yx2', 'yx3', 'yx4', 'yx5', 'yx6', 'yx7'].forEach(id => userAnswers[id] = 5);
+      }
+
+      // 如果当前还在首页，自动进入
+      document.getElementById('section-intro').classList.add('hidden');
+      document.getElementById('section-quiz').classList.add('hidden');
+      document.getElementById('restart-btn-top').classList.remove('hidden');
+
+      displayReport();
+    }
+
+    /* ==========================================================================
+       7. 模态框与辅助交互
+       ========================================================================== */
+    function showModal(title, msg, btnText = '确认', onConfirm = closeModal) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-msg').textContent = msg;
+      const actions = document.getElementById('modal-actions');
+      actions.innerHTML = `
+        <button id="modal-confirm-btn" class="w-full py-2.5 bg-jade-800 hover:bg-jade-700 text-white rounded-xl text-xs font-medium transition">
+          ${btnText}
+        </button>
+      `;
+      document.getElementById('modal-confirm-btn').onclick = onConfirm;
+      document.getElementById('custom-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    function confirmReset() {
+      showModal(
+        '重新开始体质自测？',
+        '重新开始将清空已作答的答卷数据并返回初始介绍页面。',
+        '确认重测',
+        () => {
+          closeModal();
+          userAnswers = {};
+          currentCategoryIndex = 0;
+          document.getElementById('section-report').classList.add('hidden');
+          document.getElementById('section-quiz').classList.add('hidden');
+          document.getElementById('section-intro').classList.remove('hidden');
+          document.getElementById('restart-btn-top').classList.add('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      );
+    }
+
+    function copySummaryText() {
+      const pTitle = document.getElementById('primary-constitution-badge').textContent.trim();
+      const pScore = document.getElementById('primary-score-display').textContent.trim();
+      const textToCopy = `【中医体质测评结论档案】受测人：${userName} | 主体质判定：${pTitle} (转化分: ${pScore}) | 测评标准：国家标准 ZYYXH/T157-2009 | 评估日期：${new Date().toLocaleDateString()}`;
+      
+      const textArea = document.createElement("textarea");
+      textArea.value = textToCopy;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        showModal('复制成功', '体质测评结论已成功复制至剪贴板，可粘贴发送至微信或健康备忘录。');
+      } catch (err) {
+        showModal('提示', textToCopy);
+      }
+      document.body.removeChild(textArea);
+    }
+  </script>
+</body>
+</html>
